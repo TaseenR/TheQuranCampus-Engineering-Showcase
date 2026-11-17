@@ -1,0 +1,57 @@
+model User {
+  id                 String               @id
+  email              String               @unique
+  name               String?
+  imageUrl           String?
+  role               UserRole             @default(STUDENT)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  stripeCustomerId   String?              @unique
+  auditLogs          AuditLog[]
+  courseItemProgress CourseItemProgress[]
+  subscriptions      Subscription[]
+  videoProgress      VideoProgress[]
+  webinarQuestions   WebinarQuestion[]
+
+  @@index([role])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  interval      PlanInterval
+  priceMinor    Int
+  currency      String         @default("GBP")
+  stripePriceId String         @unique
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  planId               String
+  stripeCustomerId     String
+  stripeSubscriptionId String             @unique
+  status               SubscriptionStatus
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([stripeCustomerId])
+}
+
+model ProcessedWebhook {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
